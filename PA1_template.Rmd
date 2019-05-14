@@ -1,6 +1,7 @@
 ---
 title: "Reproducible Research: Peer Assessment 1"
-output: 
+author: "Yigit Ozan Berk"
+output:
   html_document:
     keep_md: true
 ---

@@ -6,21 +6,153 @@ output:
     keep_md: true
 ---
 
+# Introduction
+It is now possible to collect a large amount of data about personal movement using activity monitoring devices such as a Fitbit, Nike Fuelband, or Jawbone Up. These type of devices are part of the “quantified self” movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. But these data remain under-utilized both because the raw data are hard to obtain and there is a lack of statistical methods and software for processing and interpreting the data.
+
+This assignment makes use of data from a personal activity monitoring device. This device collects data at 5 minute intervals through out the day. The data consists of two months of data from an anonymous individual collected during the months of October and November, 2012 and include the number of steps taken in 5 minute intervals each day.
+
+
+*Loading the necessary R packages*
+```{r packages, results = "hide"}
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+```
+
+# Analysis 
 
 ## Loading and preprocessing the data
 
+### Read the data
+```{r}
+mydata <- read.csv("activity.csv")
+```
+
+### Data processing
+Transform the date column into POSIXct
+```{r}
+mydata$date <- as.Date(mydata$date)
+myd <- separate(data = mydata, col = interval, 
+                into = c("hours", "minutes"), sep = -2)
+#inserting 0 
+emp <- myd$hours == ""
+myd[emp, 3] <- "0"
+
+#myd for hour/minute based factor operations
+```
 
 
 ## What is mean total number of steps taken per day?
+Ignoring NAs;
 
+mean and sum of total number of steps taken per day
+
+```{r}
+mn0 <- with(mydata, tapply(steps, date, mean, na.rm = T))
+sm0 <- with(mydata, tapply(steps, date, sum, na.rm = T))
+md0 <- with(mydata, tapply(steps, date, median, na.rm = T))
+print(sm0)
+```
+
+Histogram of total number of steps taken per day:
+
+```{r}
+hist(mn0, xlab = "Value", 
+     main = "Histogram")
+rug(mn0)
+```
+
+The mean of total steps taken per day
+```{r}
+mean(sm0)
+```
+
+The median of total steps taken per day
+```{r}
+median(sm0)
+```
 
 
 ## What is the average daily activity pattern?
+Ignoring NAs;
 
+time series plot of number of steps taken per interval
+
+```{r}
+mn1 <- with(mydata, tapply(steps, interval, mean, na.rm = T))
+plot(mn1, type = "l", xlab = "1 = 00:00 | 288 = 23:55",
+     ylab = "Average Number of Steps", 
+     main = "Average Steps Taken in Each Interval")
+points(x = 104, y = 206.16, pch = 19, col = "magenta")
+text(104, 206.16, "Max Value = 206.1698")
+```
+
+Which interval contains max average number of steps == 08 : 35
+
+```{r}
+x <- mn1 > 206
+mn1[x]
+```
 
 
 ## Imputing missing values
 
+Total number of missing values
+
+```{r}
+sum(is.na(mydata$steps))
+```
+
+Computing average of every interval
+```{r}
+mn2 <- aggregate(steps ~ interval, mydata, mean)
+head(mn2)
+```
+
+The new dataset with imputed values
+
+```{r}
+im_dat <- mydata
+for (i in 1:nrow(im_dat)) {
+        if(is.na(im_dat$steps[i])){
+                im_dat$steps[i] <- filter(mn2, 
+                                          mn2$interval == im_dat$interval[i])[,2]
+        }
+}
+```
+
+Histogram of total number of steps taken each day
+
+```{r}
+im_mn0 <- with(im_dat, tapply(steps, date, mean, na.rm = T))
+hist(im_mn0, xlab = "Value", 
+     main = "Histogram")
+rug(im_mn0)
+```
+
+Mean of total number of steps taken per day
+
+```{r}
+im_sm0 <- with(im_dat, tapply(steps, date, sum, na.rm = T))
+mean(im_sm0)
+```
+
+Median of total number of steps taken per day
+
+```{r}
+median(im_sm0)
+```
+
+Because the data is imputed by average of steps in each interval, the mean and 
+median of total number of steps taken per day has changed.
+```{r}
+#original
+summary(sm0)
+```
+```{r}
+#imputed
+summary(im_sm0)
+```
 
 
 ## Are there differences in activity patterns between weekdays and weekends?

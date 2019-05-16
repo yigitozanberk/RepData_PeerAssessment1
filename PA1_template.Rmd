@@ -156,3 +156,33 @@ summary(im_sm0)
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+For this part, the function weekdays() will be used to extract a new factor 
+variable with two levels of 'weekday' and 'weekend'
+
+```{r}
+#fill in the day of the week to new column
+im_dat$daytype <- with(im_dat, weekdays(date))
+#fill in weekday or weekend
+for(i in 1:nrow(im_dat)){
+      if(im_dat$daytype[i] == "Saturday" | im_dat$daytype[i] == "Sunday") {
+        im_dat$daytype[i] <- "weekend"
+      } else {
+        im_dat$daytype[i] <- "weekday"
+      }
+}
+#convert to factor
+im_dat$daytype <- as.factor(im_dat$daytype)
+str(im_dat)
+```
+
+Plot of 5-minute interval(x-axis) average number of steps taken averaged across 
+all weekdays or weekend days (y-axis)
+
+```{r daytype_plot}
+im_mn1 <- aggregate(steps ~ interval + daytype, im_dat, mean)
+
+ggplot(im_mn1, aes(x = interval, 
+                   y = steps)) + facet_grid(daytype ~.) + geom_line()
+```
+
